@@ -24,18 +24,22 @@ logger = logging.getLogger(__name__)
 load_dotenv()
 app.secret_key = os.environ.get('SECRET_KEY')
 DATABASE_URL = os.getenv('DATABASE_URL')  # written into env via EXPORT
-conn = psycopg2.connect(DATABASE_URL)
+
+
+def connect():
+    return psycopg2.connect(DATABASE_URL)
 
 
 def prepare_database():
-    cursor = conn.cursor()
-    with open(os.path.join(os.getcwd(), 'database.sql'), 'r') as f:
-        try:
-            cursor.execute(f.read())
-            conn.commit()
-        except Exception as e:
-            conn.rollback()
-            logger.error(str(e))
+    with connect() as conn:
+        with conn.cursor() as cursor:
+            with open(os.path.join(os.getcwd(), 'database.sql'), 'r') as f:
+                try:
+                    cursor.execute(f.read())
+                    conn.commit()
+                except Exception as e:
+                    conn.rollback()
+                    logger.error(str(e))
 
 
 prepare_database()
@@ -57,7 +61,6 @@ def index():
 
 @app.post('/')
 def add_url():
-    conn = psycopg2.connect(DATABASE_URL)
     url = request.form['url']
     parsed_url = urlparse(url)
     name = parsed_url.scheme + '://' + parsed_url.netloc
@@ -68,28 +71,29 @@ def add_url():
             code=302
         )
 
-    with conn.cursor() as cursor:
-        cursor.execute(
-            '''
-            SELECT * FROM urls
-            WHERE name=(%s);
-            ''',
-            (name,)
-        )
-        duplicate = cursor.fetchall()
-        if not duplicate:
+    with connect() as conn:
+        with conn.cursor() as cursor:
             cursor.execute(
                 '''
-                INSERT INTO urls (name, created_at)
-                VALUES (%s, %s) RETURNING id, name, created_at;
+                SELECT * FROM urls
+                WHERE name=(%s);
                 ''',
-                (name, datetime.now())
+                (name,)
             )
-            row = cursor.fetchall()
-            flash('URL added successfully!', 'success')
-        else:
-            row = duplicate
-            flash('URL is already in URL list', 'info')
+            duplicate = cursor.fetchall()
+            if not duplicate:
+                cursor.execute(
+                    '''
+                    INSERT INTO urls (name, created_at)
+                    VALUES (%s, %s) RETURNING id, name, created_at;
+                    ''',
+                    (name, datetime.now())
+                )
+                row = cursor.fetchall()
+                flash('URL added successfully!', 'success')
+            else:
+                row = duplicate
+                flash('URL is already in URL list', 'info')
         id = row[0][0]
         session['url'] = row[0]
     return redirect(
@@ -111,14 +115,10 @@ def show(id):
 
 @app.get('/urls')
 def show_all():
-    conn = psycopg2.connect(DATABASE_URL)
-    with conn.cursor() as cursor:
-        cursor.execute(
-            '''
-            SELECT * FROM urls
-            '''
-        )
-        urls = cursor.fetchall()
+    with connect() as conn:
+        with conn.cursor() as cursor:
+            cursor.execute('SELECT * FROM urls')
+            urls = cursor.fetchall()
     return render_template(
         'show_all.html',
         urls=urls
