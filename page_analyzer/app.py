@@ -13,14 +13,15 @@ from dotenv import load_dotenv
 from urllib.parse import urlparse
 from validators import url as validate
 from datetime import datetime
-from .utils import connect, prepare_database
+from .utils import bs4_check, connect, prepare_database
 
 
 app = Flask(__name__)
 
 
 load_dotenv()
-app.secret_key = os.environ.get('SECRET_KEY')
+load_dotenv(os.path.join(os.getcwd(), 'secret.env'))
+app.secret_key = os.getenv('SECRET_KEY')
 prepare_database()
 
 
@@ -148,20 +149,24 @@ def check(id):
             )
             url = cursor.fetchone()
             try:
-                r = requests.get(url[0])
-                status_code = r.status_code
+                response = requests.get(url[0])
+                status_code = response.status_code
+                h1, title, description = bs4_check(response.content)
             except Exception as e:
                 flash(f'Connection error: {str(e)}', 'danger')
                 return redirect(
                     url_for('show', id=id),
                     code=302
                 )
+            print(h1, title, description)
             cursor.execute(
                 '''
-                INSERT INTO url_checks (url_id, status_code, created_at)
-                VALUES (%s, %s, %s);
+                INSERT INTO url_checks
+                (url_id, status_code, h1, title, description, created_at)
+                VALUES (%s, %s, %s, %s, %s, %s);
                 ''',
-                (id, status_code, datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+                (id, status_code, h1, title,
+                 description, datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
             )
 
     return redirect(

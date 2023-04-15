@@ -17,6 +17,7 @@ logging = "^0.4.9.6"
 psycopg2-binary = "^2.9.6"
 validators = "^0.20.0"
 requests = "^2.28.2"
+bs4 = "^0.0.1"
 
 
 [build-system]

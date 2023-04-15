@@ -16,9 +16,3 @@ CREATE TABLE url_checks (
 	description text,
 	created_at timestamp
 );
-
-INSERT INTO urls (name, created_at)
-VALUES ('MY_NAME', '2023-04-14 12:00:00');
-
-INSERT INTO url_checks (url_id, status_code, h1, title, description, created_at)
-VALUES (1, 302, 'Hello', 'World', 'Hello world', '2023-04-14 13:00:00');
