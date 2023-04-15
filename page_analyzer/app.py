@@ -5,7 +5,6 @@ from flask import (
     redirect,
     render_template,
     request,
-    session,
     url_for
 )
 from dotenv import load_dotenv
@@ -95,7 +94,6 @@ def add_url():
                 row = duplicate
                 flash('URL is already in URL list', 'info')
         id = row[0][0]
-        session['url'] = row[0]
     return redirect(
         url_for('show', id=id),
         code=302
@@ -104,12 +102,31 @@ def add_url():
 
 @app.get('/urls/<id>')
 def show(id):
-    url_desc = session['url']
+    with connect() as conn:
+        with conn.cursor() as cursor:
+            cursor.execute(
+                '''
+                SELECT * FROM urls
+                WHERE id=(%s);
+                ''',
+                (id,)
+            )
+            url_desc = cursor.fetchall()[0]
+            cursor.execute(
+                '''
+                SELECT id, status_code, h1, title, description, created_at
+                FROM url_checks
+                WHERE url_id=(%s);
+                ''',
+                (id)
+            )
+            checks = cursor.fetchall()
     messages = get_flashed_messages(with_categories=True)
     return render_template(
         'show.html',
         url_desc=url_desc,
-        messages=messages
+        messages=messages,
+        checks=checks
     )
 
 
@@ -117,9 +134,37 @@ def show(id):
 def show_all():
     with connect() as conn:
         with conn.cursor() as cursor:
-            cursor.execute('SELECT * FROM urls')
+            cursor.execute(
+                '''
+                SELECT DISTINCT ON (url_checks.url_id)
+                    urls.id,
+                    urls.name,
+                    url_checks.created_at,
+                    url_checks.status_code
+                FROM urls
+                JOIN url_checks ON url_checks.url_id = urls.id
+                ORDER BY url_checks.url_id, url_checks.created_at DESC;
+                '''
+            )
             urls = cursor.fetchall()
     return render_template(
         'show_all.html',
         urls=urls
+    )
+
+
+@app.post('/<id>/checks')
+def check(id):
+    with connect() as conn:
+        with conn.cursor() as cursor:
+            cursor.execute(
+                '''
+                INSERT INTO url_checks (url_id, created_at)
+                VALUES (%s, %s);
+                ''',
+                (id, datetime.now())
+            )
+    return redirect(
+        url_for('show', id=id),
+        code=302
     )

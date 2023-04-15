@@ -48,6 +48,36 @@
 	  </tbody>
 	</table>
       </div>
+
+    <h2 class="mt-5 mb-3">Checks</h2>
+    <form method="post" action="{{ url_for('check', id=url_desc[0]) }}">
+      <input type="submit" class="btn btn-primary" value="Запустить проверку">
+    </form>
+
+    <div>
+      <table class="table table-bordered table-hover mt-2" data-test="checks">
+	<thead>
+	  <tr>
+	    <th>ID</th>
+	    <th>Status code</th>
+	    <th>h1</th>
+	    <th>Title</th>
+	    <th>Description</th>
+	    <th>Created at</th>
+	  </tr>
+	</thead>
+	<tbody>
+	  {% if checks %}
+	    {% for check in checks %}
+	      <tr>
+		{% for value in check %}
+		  <td>{{ value }}</td>
+		{% endfor %}
+	      </tr>
+	    {% endfor %}
+	  {% endif %}
+	</tbody>
+      </table>
     </div>
   </main>
 

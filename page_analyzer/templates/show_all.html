@@ -27,7 +27,7 @@
     <h1>URL list </h1>
 
       <div class="table-responsive">
-	<table class="table table-bordered table-hover text-nowrap" data-test="urls">
+	<table class="table table-bordered table-hover text-nowrap" data-test="urls url">
 	  <thead>
 	    <tr>
 	      <th>ID</th>
@@ -40,9 +40,9 @@
 	    {% for url_desc in urls %}
 	      <tr>
 		<td>{{ url_desc[0] }}</td>
-		<td>{{ url_desc[1] }}</td>
-		<td></td>
-		<td></td>
+		<td><a href="{{ url_for('show', id=url_desc[0])}}">{{ url_desc[1] }}</a></td>
+		<td>{{ url_desc[2] }}</td>
+		<td>{{ url_desc[3] }}</td>
 	      </tr>
 	    {% endfor %}
 	  </tbody>
