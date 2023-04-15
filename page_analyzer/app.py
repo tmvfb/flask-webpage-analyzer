@@ -7,50 +7,25 @@ from flask import (
     request,
     url_for
 )
-from dotenv import load_dotenv
 import os
-import psycopg2
-import logging
+import requests
+from dotenv import load_dotenv
 from urllib.parse import urlparse
 from validators import url as validate
 from datetime import datetime
+from .utils import connect, prepare_database
 
 
 app = Flask(__name__)
 
 
-logger = logging.getLogger(__name__)
 load_dotenv()
 app.secret_key = os.environ.get('SECRET_KEY')
-DATABASE_URL = os.getenv('DATABASE_URL')  # written into env via EXPORT
-
-
-def connect():
-    return psycopg2.connect(DATABASE_URL)
-
-
-def prepare_database():
-    with connect() as conn:
-        with conn.cursor() as cursor:
-            with open(os.path.join(os.getcwd(), 'database.sql'), 'r') as f:
-                try:
-                    cursor.execute(f.read())
-                    conn.commit()
-                except Exception as e:
-                    conn.rollback()
-                    logger.error(str(e))
-
-
 prepare_database()
 
 
 @app.get('/')
 def index():
-    # cursor = conn.cursor()
-    # cursor.execute('SELECT * FROM urls')
-    # all_urls = cursor.fetchall()
-    # print(all_urls)
-
     messages = get_flashed_messages(with_categories=True)
     return render_template(
         'index.html',
@@ -63,6 +38,7 @@ def add_url():
     url = request.form['url']
     parsed_url = urlparse(url)
     name = parsed_url.scheme + '://' + parsed_url.netloc
+
     if not validate(url) or len(name) > 255:
         flash('Incorrect URL', 'danger')
         return redirect(
@@ -79,21 +55,24 @@ def add_url():
                 ''',
                 (name,)
             )
-            duplicate = cursor.fetchall()
+            duplicate = cursor.fetchone()
+
             if not duplicate:
                 cursor.execute(
                     '''
                     INSERT INTO urls (name, created_at)
                     VALUES (%s, %s) RETURNING id, name, created_at;
                     ''',
-                    (name, datetime.now())
+                    (name, datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
                 )
-                row = cursor.fetchall()
+                row = cursor.fetchone()
                 flash('URL added successfully!', 'success')
+
             else:
                 row = duplicate
                 flash('URL is already in URL list', 'info')
-        id = row[0][0]
+
+    id = row[0]
     return redirect(
         url_for('show', id=id),
         code=302
@@ -111,16 +90,18 @@ def show(id):
                 ''',
                 (id,)
             )
-            url_desc = cursor.fetchall()[0]
+            url_desc = cursor.fetchone()
+
             cursor.execute(
                 '''
                 SELECT id, status_code, h1, title, description, created_at
                 FROM url_checks
                 WHERE url_id=(%s);
                 ''',
-                (id)
+                (id,)
             )
             checks = cursor.fetchall()
+
     messages = get_flashed_messages(with_categories=True)
     return render_template(
         'show.html',
@@ -147,6 +128,7 @@ def show_all():
                 '''
             )
             urls = cursor.fetchall()
+
     return render_template(
         'show_all.html',
         urls=urls
@@ -159,11 +141,29 @@ def check(id):
         with conn.cursor() as cursor:
             cursor.execute(
                 '''
-                INSERT INTO url_checks (url_id, created_at)
-                VALUES (%s, %s);
+                SELECT name FROM urls
+                WHERE id=(%s);
                 ''',
-                (id, datetime.now())
+                (id)
             )
+            url = cursor.fetchone()
+            try:
+                r = requests.get(url[0])
+                status_code = r.status_code
+            except Exception as e:
+                flash(f'Connection error: {str(e)}', 'danger')
+                return redirect(
+                    url_for('show', id=id),
+                    code=302
+                )
+            cursor.execute(
+                '''
+                INSERT INTO url_checks (url_id, status_code, created_at)
+                VALUES (%s, %s, %s);
+                ''',
+                (id, status_code, datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+            )
+
     return redirect(
         url_for('show', id=id),
         code=302

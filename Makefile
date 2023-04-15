@@ -17,4 +17,7 @@ install:
 	poetry build
 	poetry install
 
-.PHONY: lint selfcheck check install
+setup:
+	sh setup.sh
+
+.PHONY: lint selfcheck check install setup
