@@ -34,19 +34,18 @@ def index():
     )
 
 
-@app.post('/')
+@app.post('/urls')
 def add_url():
     url = request.form['url']
     parsed_url = urlparse(url)
     name = parsed_url.scheme + '://' + parsed_url.netloc
 
     if not validate(url) or len(name) > 255:
-        flash('Incorrect URL', 'danger')
-        return redirect(
-            url_for('index'),
-            code=302
-        )
-
+        error = [('danger', 'Некорректный URL')]
+        return render_template(
+            'index.html',
+            messages=error
+        ), 422
     with connect() as conn:
         with conn.cursor() as cursor:
             cursor.execute(
@@ -67,11 +66,11 @@ def add_url():
                     (name, datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
                 )
                 row = cursor.fetchone()
-                flash('URL added successfully!', 'success')
+                flash('Страница успешно добавлена', 'success')
 
             else:
                 row = duplicate
-                flash('URL is already in URL list', 'info')
+                flash('Страница уже существует', 'info')
 
     id = row[0]
     return redirect(
@@ -136,7 +135,7 @@ def show_all():
     )
 
 
-@app.post('/<id>/checks')
+@app.post('/urls/<id>/checks')
 def check(id):
     with connect() as conn:
         with conn.cursor() as cursor:
@@ -150,15 +149,14 @@ def check(id):
             url = cursor.fetchone()
             try:
                 response = requests.get(url[0])
+                response.raise_for_status()
                 status_code = response.status_code
                 h1, title, description = bs4_check(response.content)
-            except Exception as e:
-                flash(f'Connection error: {str(e)}', 'danger')
+            except requests.exceptions.RequestException:
+                flash('Произошла ошибка при проверке', 'danger')
                 return redirect(
-                    url_for('show', id=id),
-                    code=302
+                    url_for('show', id=id)
                 )
-            print(h1, title, description)
             cursor.execute(
                 '''
                 INSERT INTO url_checks
@@ -169,6 +167,7 @@ def check(id):
                  description, datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
             )
 
+    flash('Страница успешно проверена', 'success')
     return redirect(
         url_for('show', id=id),
         code=302
