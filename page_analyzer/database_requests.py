@@ -2,6 +2,7 @@ import requests
 from flask import flash
 from datetime import datetime
 from .utils import bs4_check, connect
+from flask_babel import gettext
 
 
 def select_duplicate_id_or_insert_new(name: str) -> list:
@@ -25,11 +26,11 @@ def select_duplicate_id_or_insert_new(name: str) -> list:
                     (name, datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
                 )
                 row = cursor.fetchone()
-                flash('Страница успешно добавлена', 'success')
+                flash(gettext('URL added successfully!'), 'success')
 
             else:
                 row = duplicate
-                flash('Страница уже существует', 'info')
+                flash(gettext('Page is already added'), 'info')
 
     return row[0]
 
@@ -104,9 +105,9 @@ def insert_new_check(id: int):
                     (id, status_code, h1, title,
                      description, datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
                 )
-                flash('Страница успешно проверена', 'success')
+                flash(gettext('Page verified successfully'), 'success')
 
             except requests.exceptions.RequestException:
-                flash('Произошла ошибка при проверке', 'danger')
+                flash(gettext('Verification error'), 'danger')
 
     return

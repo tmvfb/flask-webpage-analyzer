@@ -4,7 +4,9 @@ from flask import (
     redirect,
     render_template,
     request,
-    url_for
+    url_for,
+    session,
+    flash
 )
 import os
 from dotenv import load_dotenv
@@ -17,9 +19,21 @@ from .database_requests import (
     select_checks_for_all_urls,
     insert_new_check
 )
+from flask_babel import Babel, gettext
 
 
 app = Flask(__name__)
+
+
+def get_locale():
+    return session.get('language', 'en')
+
+
+app.config['BABEL_DEFAULT_LOCALE'] = 'en'
+app.config['BABEL_TRANSLATION_DIRECTORIES'] = os.path.join(
+    os.getcwd(), 'translations'
+)
+babel = Babel(app, locale_selector=get_locale)
 
 
 load_dotenv()
@@ -49,11 +63,8 @@ def add_url():
     name = parsed_url.scheme + '://' + parsed_url.netloc
 
     if not validate(url) or len(name) > 255:
-        error = [('danger', 'Некорректный URL')]
-        return render_template(
-            'index.html',
-            messages=error
-        ), 422
+        flash(gettext('Incorrect URL'), 'danger')
+        return redirect(url_for('index'))
 
     id = select_duplicate_id_or_insert_new(name)
     return redirect(
@@ -90,3 +101,9 @@ def check(id):
         url_for('show', id=id),
         code=302
     )
+
+
+@app.route('/language/<string:lang>')
+def change_locale(lang):
+    session['language'] = lang
+    return redirect(session['path'])  # is set in html template
