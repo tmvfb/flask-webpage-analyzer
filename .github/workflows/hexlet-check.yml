@@ -5,12 +5,12 @@
 
 name: hexlet-check
 
-on:
-  push:
-    branches:
-      - '**'
-    tags:
-      - '**'
+# on:
+#   push:
+#     branches:
+#       - '**'
+#     tags:
+#       - '**'
 
 jobs:
   build:

@@ -29,21 +29,11 @@ def prepare_database():
 
 def bs4_check(response):
     soup = BeautifulSoup(response, 'html.parser')
-    h1 = soup.find('h1')
-    title = soup.find('title')
+
     meta_tag = soup.find('meta', {'name': 'description'})
 
-    if h1:
-        h1 = soup.h1.text
-    else:
-        h1 = None
-    if title:
-        title = soup.title.text
-    else:
-        title = None
-    if meta_tag:
-        description = meta_tag['content']
-    else:
-        description = None
+    h1 = soup.h1.text if soup.find('h1') else None
+    title = soup.title.text if soup.find('title') else None
+    description = meta_tag['content'] if meta_tag else None
 
     return h1, title, description
