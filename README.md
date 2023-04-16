@@ -17,7 +17,9 @@
 
 ### Description
 
-Simple web application that scrapes **h1**, **title** and **description** tags for the desired website. Backend is written in Python using Flask for routing, psycopg2 for PostgreSQL database management, Beautiful Soup and requests for HTML parsing. Flask-Babel is used for adding Russian translation. Database and final project are deployed using [render](https://render.com/). Frontend relies on Bootstrap 5.0.
+Simple web application and SEO tool that scrapes **h1**, **title** and **description** tags for the desired website. Backend is written in Python using Flask for routing, psycopg2 for PostgreSQL database management, Beautiful Soup and requests for HTML parsing. Flask-Babel is used for adding Russian translation. Database and final project are deployed using [render](https://render.com/). Frontend relies on Bootstrap 5.0.  
+  
+![image](https://user-images.githubusercontent.com/116455436/232334772-eaf8d74d-21f2-495d-bfce-7c618d69317f.png)
 
 ### Prerequisites
 * Python >=3.7.10
@@ -27,12 +29,12 @@ Simple web application that scrapes **h1**, **title** and **description** tags f
 
 ### Code usage
 
-To reuse this code a PostgreSQL database server is needed. 
+To reuse this code, a PostgreSQL database server is needed. 
 
 1. `git clone https://github.com/tmvfb/flask-webpage-analyzer.git`
 2. `cd flask-webpage-analyzer`
 3. `make install` to build dependencies
-4. `sh setup.sh` to configure environment variables. You will be prompted to enter your database url
+4. `sh setup.sh` to configure environment variables. You will be prompted to enter your database URL
   
 Successful configuration can be started using either `make dev` (Flask dev server) or `make start` (gunicorn production server).
 
