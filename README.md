@@ -17,7 +17,7 @@
 
 ### Description
 
-Simple web application and SEO tool that scrapes **h1**, **title** and **description** tags for the desired website. Backend is written in Python using Flask for routing, psycopg2 for PostgreSQL database management, Beautiful Soup and requests for HTML parsing. Flask-Babel is used for adding Russian translation. Database and final project are deployed using [render](https://render.com/). Frontend relies on Bootstrap 5.0.  
+Simple web application and SEO tool that scrapes **h1**, **title** and **description** tags for the desired website. Backend is written in Python using Flask for routing, psycopg2 for PostgreSQL database management, Beautiful Soup and requests for HTML parsing. Flask-Babel is used for adding Russian translation. Database and final project are deployed using [render](https://render.com/). Frontend relies on Bootstrap 5.0 and jinja2 templating engine. Database is reset on every server restart.  
   
 ![image](https://user-images.githubusercontent.com/116455436/232334772-eaf8d74d-21f2-495d-bfce-7c618d69317f.png)
 
