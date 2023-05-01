@@ -64,14 +64,14 @@ def select_checks_for_all_urls() -> list:
         with conn.cursor() as cursor:
             cursor.execute(
                 '''
-                SELECT DISTINCT ON (url_checks.url_id)
+                SELECT DISTINCT ON (urls.id)
                     urls.id,
                     urls.name,
                     url_checks.created_at,
                     url_checks.status_code
                 FROM urls
-                JOIN url_checks ON url_checks.url_id = urls.id
-                ORDER BY url_checks.url_id, url_checks.created_at DESC;
+                LEFT JOIN url_checks ON url_checks.url_id = urls.id
+                ORDER BY urls.id, url_checks.created_at DESC;
                 '''
             )
             urls = cursor.fetchall()

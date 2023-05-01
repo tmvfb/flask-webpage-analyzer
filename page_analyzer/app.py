@@ -43,8 +43,8 @@ prepare_database()
 
 
 @app.errorhandler(404)
-def page_not_found(e):
-    return render_template('404.html'), 404
+def page_not_found(err):
+    return render_template('base.html'), 404
 
 
 @app.get('/')
@@ -88,6 +88,8 @@ def show(id):
 @app.get('/urls')
 def show_all():
     urls = select_checks_for_all_urls()
+    for i in range(len(urls)):  # prettify output
+        urls[i] = [el if el is not None else '' for el in urls[i]]
     return render_template(
         'show_all.html',
         urls=urls
